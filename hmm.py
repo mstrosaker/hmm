@@ -13,6 +13,16 @@ class state:
         self.p_transition = p_transition	# dictionary (string: float)
         self.p_termination = p_termination	# float (between 0.0 and 1.0)
 
+    def __repr__(self):
+        ret = ['state(']
+        ret.append("'%s'," % self.name)
+        ret.append('%f,' % self.p_initial)
+        ret.append('%s,' % repr(self.p_emission))
+        ret.append('%s,' % repr(self.p_transition))
+        ret.append('%f' % self.p_termination)
+        ret.append(')')
+        return '\n'.join(ret)
+
 class hmm:
     def __init__(self, alphabet, states):
         """
@@ -59,6 +69,16 @@ class hmm:
             if state.p_termination > 0.0:
                 self.terminal_state = True
                 self.terminating_states.append(state.name)
+
+    def __repr__(self):
+        ret = ['hmm(']
+        ret.append('%s,' % self.alphabet)
+        ret.append('[')
+        for s_name, s in self.states.iteritems():
+            ret.append('%s,' % repr(s))
+        ret.append(']')
+        ret.append(')')
+        return '\n'.join(ret)
 
     def score(self, seq_state, seq_observed):
         """
@@ -313,6 +333,83 @@ class hmm:
         state_seq.reverse()   # because the list of states was built backwards
         return (state_seq, p_overall)
 
+def train_hmm(training_data, include_terminal_state=False):
+    """
+    Create a new HMM based solely on annotated training data.  Both the
+    topology of the state interconnections and the probabilities of the
+    emissions and transitions are inferred from training data.
+
+    Parameters:
+      - training_data: a list of tuples; each tuple consists of two lists
+        of the same length:
+        - a list of symbols
+        - a list of states corresponding to the sequence that best explains
+          the list of symbols
+      - include_terminal_state: a boolean, indicating whether an implied
+        terminal state should be included in the model
+    Returns:
+      - a new hmm object, ready for use
+
+    TODO: data validation; ensure that the lengths of the two lists in
+    each tuple is exactly the same length
+    """
+    # determine the list of states and alphabet of symbols
+    alphabet = []
+    state_names = []
+    for sample in training_data:
+        alphabet.extend(list(set(sample[0])))
+        state_names.extend(list(set(sample[1])))
+    alphabet = list(set(alphabet))
+    state_names = list(set(state_names))
+
+    states = []
+    for s_name in state_names:
+        states.append(state(s_name, 0.0, None, None))
+
+    # calculate the initial probabilities
+    s_dict = {}
+    for s in state_names:
+        s_dict[s] = 0
+    for sample in training_data:
+        s_dict[sample[1][0]] += 1
+    for s in states:
+        s.p_initial = s_dict[s.name] / (len(training_data) * 1.0)
+
+    # calculate the emission probabilities for each state
+    for s in states:
+        emit = {}
+        total = 0
+        for sample in training_data:
+            for i in range(len(sample[1])):
+                if sample[1][i] == s.name:
+                    total += 1
+                    emit[sample[0][i]] = emit.get(sample[0][i], 0) + 1
+        for e in emit.keys():
+            emit[e] = emit[e] / (total * 1.0)
+        s.p_emission = emit
+
+    # calculate the transition probabilities for each state
+    for s in states:
+        tran = {}
+        total = 0
+        term = 0
+        for sample in training_data:
+            for i in range(len(sample[1])-1):
+                if sample[1][i] == s.name:
+                    total += 1
+                    tran[sample[1][i+1]] = tran.get(sample[1][i+1], 0) + 1
+            if include_terminal_state:
+                if sample[1][-1] == s.name:
+                    total += 1
+                    term += 1
+        for t in tran.keys():
+            tran[t] = tran[t] / (total * 1.0)
+        s.p_transition = tran
+        if include_terminal_state:
+            s.p_termination = term / (total * 1.0)
+
+    return hmm(alphabet, states)
+
 
 if __name__ == '__main__':
 
@@ -377,4 +474,14 @@ if __name__ == '__main__':
     print "aaabbaaaababbababbbaabbababbabbbbaabbbab', where an 'a' symbol"
     print "represents an A or T, and a 'b' symbol represents a G or C"
     print h.viterbi_path('bbababbbaabbababbabbbbaabbbabaababaaabbaababaaaaaabbaaaababbababbbaabbababbabbbbaabbbab')
+
+    training_data = [('CTTCATGTGAAAGCAGACGTAAGTCA',
+                      'EEEEEEEEEEEEEEEEEE5IIIIIII'),
+                     ('CTTCATGTGAAAGCAGACATAAGTCA',
+                      'EEEEEEEEEEEEEEEEEE5IIIIIII')]
+    h = train_hmm(training_data, True)
+    print h
+
+    test = eval(repr(h))
+    print test.viterbi_path('CTTCATGTGAAAGCAGACGTAAGTCA')
 
