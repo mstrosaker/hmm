@@ -14,7 +14,7 @@ class state:
         self.p_termination = p_termination	# float (between 0.0 and 1.0)
 
     def __repr__(self):
-        ret = ['state(']
+        ret = ['hmm.state(']
         ret.append("'%s'," % self.name)
         ret.append('%f,' % self.p_initial)
         ret.append('%s,' % repr(self.p_emission))
@@ -71,7 +71,7 @@ class hmm:
                 self.terminating_states.append(state.name)
 
     def __repr__(self):
-        ret = ['hmm(']
+        ret = ['hmm.hmm(']
         ret.append('%s,' % self.alphabet)
         ret.append('[')
         for s_name, s in self.states.iteritems():
@@ -484,4 +484,20 @@ if __name__ == '__main__':
 
     test = eval(repr(h))
     print test.viterbi_path('CTTCATGTGAAAGCAGACGTAAGTCA')
+
+    print
+    print "assignment 3 question 9"
+    s1 = state('S1', 0.5, { 'A': 0.5, 'G': 0.5 }, { 'S1': 0.4, 'S2': 0.6 })
+    s2 = state('S2', 0.5, {'A': 0.9, 'G': 0.1}, {'S1': 0.25, 'S2': 0.75})
+    h = hmm(['A', 'G'], [s1, s2])
+    h.enumerate('AGA')
+    print h.viterbi_path('AGA')
+
+    print
+    print "assignment 3 question 10"
+    s1 = state('S1', 0.2941176, { 'A': 0.5, 'G': 0.5 }, { 'S1': 0.4, 'S2': 0.6 })
+    s2 = state('S2', 0.7058824, {'A': 0.9, 'G': 0.1}, {'S1': 0.25, 'S2': 0.75})
+    h = hmm(['A', 'G'], [s1, s2])
+    h.enumerate('AGA')
+    print h.viterbi_path('AGA')
 
