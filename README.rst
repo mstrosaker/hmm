@@ -18,7 +18,7 @@ Installing
 ----------
 
 The source distribution for the most recent version can be obtained from
-the `hclust project page <https://github.com/mstrosaker/hmm>`_  by
+the `hmm project page <https://github.com/mstrosaker/hmm>`_  by
 clicking on the Download ZIP button.  The module can be installed with::
 
     > python setup.py install
@@ -31,7 +31,7 @@ How to use it?
 
 **hmm** is a regular Python module; you import and invoke it from your
 own code.  For a detailed usage guide and examples, please consult the
-`user's guide <htps://github.com/mstrosaker/hmm/wiki/User's-guide>`_.
+`user's guide <https://github.com/mstrosaker/hmm/wiki/User's-guide>`_.
 
 License
 -------
